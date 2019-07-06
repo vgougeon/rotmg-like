@@ -130,6 +130,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 window.game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](window.innerWidth, window.innerHeight)
+window.game.setup();
 window.game.loop();
 
 
@@ -151,17 +152,25 @@ __webpack_require__.r(__webpack_exports__);
 
 class Game {
     constructor(width, height){
-        _pixi_js__WEBPACK_IMPORTED_MODULE_0__["settings"].SCALE_MODE = _pixi_js__WEBPACK_IMPORTED_MODULE_0__["SCALE_MODES"].NEAREST; 
+        _pixi_js__WEBPACK_IMPORTED_MODULE_0__["settings"].SCALE_MODE = _pixi_js__WEBPACK_IMPORTED_MODULE_0__["SCALE_MODES"].NEAREST;
         this.width = width
         this.height = height
         this.app = new _pixi_js__WEBPACK_IMPORTED_MODULE_0__["Application"]({
             width: this.width, height: this.height, backgroundColor: 0x202041, resolution: window.devicePixelRatio || 1,
         })
         document.body.appendChild(this.app.view)
-        this.map = new _map_js__WEBPACK_IMPORTED_MODULE_1__["default"]("plain")
+        this.map = new _map_js__WEBPACK_IMPORTED_MODULE_1__["default"]("plain", this)
+    }
+    setup(){
+        this.map.draw()
     }
     loop(){
-        this.map.draw()
+        this.app.ticker.add((delta) => {
+            // rotate the container!
+            // use delta to create frame-independent transform
+            this.map.container.position.x += 1 * delta;
+            console.log(this.map.container.position.x)
+        });
     }
 }
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -181,10 +190,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _tileset_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tileset.js */ "./src/tileset.js");
 
 class Map {
-    constructor(map){
+    constructor(map, game){
         this.scale = 4
         this.tilesize = 64
         this.tileset = new _tileset_js__WEBPACK_IMPORTED_MODULE_0__["default"]('assets/tileset/simple.png')
+        this.container = new PIXI.Container();
+        game.app.stage.addChild(this.container)
     }
     draw(){
         for(let i = 0; i < window.game.width / this.tilesize; i++){
@@ -195,7 +206,8 @@ class Map {
 
                 sprite.x = i * this.tilesize
                 sprite.y = j * this.tilesize
-                window.game.app.stage.addChild(sprite)
+                // window.game.app.stage.addChild(sprite)
+                this.container.addChild(sprite)
             }
         }
     }

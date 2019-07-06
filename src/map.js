@@ -1,9 +1,11 @@
 import Tileset from './tileset.js';
 class Map {
-    constructor(map){
+    constructor(map, game){
         this.scale = 4
         this.tilesize = 64
         this.tileset = new Tileset('assets/tileset/simple.png')
+        this.container = new PIXI.Container();
+        game.app.stage.addChild(this.container)
     }
     draw(){
         for(let i = 0; i < window.game.width / this.tilesize; i++){
@@ -14,7 +16,8 @@ class Map {
 
                 sprite.x = i * this.tilesize
                 sprite.y = j * this.tilesize
-                window.game.app.stage.addChild(sprite)
+                // window.game.app.stage.addChild(sprite)
+                this.container.addChild(sprite)
             }
         }
     }
