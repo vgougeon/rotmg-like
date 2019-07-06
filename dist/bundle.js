@@ -130,6 +130,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 window.game = new _game_js__WEBPACK_IMPORTED_MODULE_0__["default"](window.innerWidth, window.innerHeight)
+window.game.loop();
 
 
 /***/ }),
@@ -150,6 +151,7 @@ __webpack_require__.r(__webpack_exports__);
 
 class Game {
     constructor(width, height){
+        _pixi_js__WEBPACK_IMPORTED_MODULE_0__["settings"].SCALE_MODE = _pixi_js__WEBPACK_IMPORTED_MODULE_0__["SCALE_MODES"].NEAREST; 
         this.width = width
         this.height = height
         this.app = new _pixi_js__WEBPACK_IMPORTED_MODULE_0__["Application"]({
@@ -157,6 +159,9 @@ class Game {
         })
         document.body.appendChild(this.app.view)
         this.map = new _map_js__WEBPACK_IMPORTED_MODULE_1__["default"]("plain")
+    }
+    loop(){
+        this.map.draw()
     }
 }
 /* harmony default export */ __webpack_exports__["default"] = (Game);
@@ -173,14 +178,26 @@ class Game {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _tileset_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./tileset.js */ "./src/tileset.js");
+
 class Map {
     constructor(map){
-        console.log("Initializing Map")
-        // TILESET
-        this.tileset = PIXI.Texture.from('../assets/tileset/simple.png');
+        this.scale = 4
+        this.tilesize = 64
+        this.tileset = new _tileset_js__WEBPACK_IMPORTED_MODULE_0__["default"]('assets/tileset/simple.png')
     }
     draw(){
+        for(let i = 0; i < window.game.width / this.tilesize; i++){
+            for(let j = 0; j < window.game.height / this.tilesize; j++){
+                let sprite = PIXI.Sprite.from(this.tileset.tile[0])
+                sprite.scale.x = this.scale
+                sprite.scale.y = this.scale
 
+                sprite.x = i * this.tilesize
+                sprite.y = j * this.tilesize
+                window.game.app.stage.addChild(sprite)
+            }
+        }
     }
 }
 /* harmony default export */ __webpack_exports__["default"] = (Map);
@@ -218,6 +235,32 @@ if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}r.
 //# sourceMappingURL=pixi.min.js.map
 
 /* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../node_modules/webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./src/tileset.js":
+/*!************************!*\
+  !*** ./src/tileset.js ***!
+  \************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+class Tileset {
+    constructor(url){
+        this.tile = []
+        this.img = PIXI.BaseTexture.fromImage(url);
+        for(let i = 0; i < 5; i++){
+            this.tile.push(
+                new PIXI.Texture(this.img, new PIXI.Rectangle(0 + i * 16, 0, 16, 16))
+            )
+        }
+        console.log(this.tile)
+    }
+}
+/* harmony default export */ __webpack_exports__["default"] = (Tileset);
+
 
 /***/ }),
 
