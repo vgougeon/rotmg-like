@@ -1,5 +1,7 @@
 import * as PIXI from "./pixi.js";
 import Map from './map.js';
+import Player from './player.js';
+import Viewport from './viewport.js';
 class Game {
     constructor(width, height){
         PIXI.settings.SCALE_MODE = PIXI.SCALE_MODES.NEAREST;
@@ -10,16 +12,16 @@ class Game {
         })
         document.body.appendChild(this.app.view)
         this.map = new Map("plain", this)
+        this.player = new Player(this)
+        this.viewport = new Viewport()
     }
     setup(){
-        this.map.draw()
     }
     loop(){
         this.app.ticker.add((delta) => {
-            // rotate the container!
-            // use delta to create frame-independent transform
-            this.map.container.position.x += 1 * delta;
-            console.log(this.map.container.position.x)
+            this.player.update()
+            this.viewport.update()
+            this.map.update()
         });
     }
 }

@@ -148,6 +148,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _pixi_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./pixi.js */ "./src/pixi.js");
 /* harmony import */ var _pixi_js__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_pixi_js__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _map_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./map.js */ "./src/map.js");
+/* harmony import */ var _player_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./player.js */ "./src/player.js");
+/* harmony import */ var _viewport_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./viewport.js */ "./src/viewport.js");
+
+
 
 
 class Game {
@@ -160,16 +164,16 @@ class Game {
         })
         document.body.appendChild(this.app.view)
         this.map = new _map_js__WEBPACK_IMPORTED_MODULE_1__["default"]("plain", this)
+        this.player = new _player_js__WEBPACK_IMPORTED_MODULE_2__["default"](this)
+        this.viewport = new _viewport_js__WEBPACK_IMPORTED_MODULE_3__["default"]()
     }
     setup(){
-        this.map.draw()
     }
     loop(){
         this.app.ticker.add((delta) => {
-            // rotate the container!
-            // use delta to create frame-independent transform
-            this.map.container.position.x += 1 * delta;
-            console.log(this.map.container.position.x)
+            this.player.update()
+            this.viewport.update()
+            this.map.update()
         });
     }
 }
@@ -193,22 +197,91 @@ class Map {
     constructor(map, game){
         this.scale = 4
         this.tilesize = 64
-        this.tileset = new _tileset_js__WEBPACK_IMPORTED_MODULE_0__["default"]('assets/tileset/simple.png')
+        this.tileset = new _tileset_js__WEBPACK_IMPORTED_MODULE_0__["default"]('assets/tileset/simple.png', 16)
         this.container = new PIXI.Container();
         game.app.stage.addChild(this.container)
+        this.lastX = 0
+        this.lastY = 0
+        this.matrix
+        this.getMatrix()
     }
     draw(){
-        for(let i = 0; i < window.game.width / this.tilesize; i++){
-            for(let j = 0; j < window.game.height / this.tilesize; j++){
-                let sprite = PIXI.Sprite.from(this.tileset.tile[0])
-                sprite.scale.x = this.scale
-                sprite.scale.y = this.scale
-
-                sprite.x = i * this.tilesize
-                sprite.y = j * this.tilesize
-                // window.game.app.stage.addChild(sprite)
-                this.container.addChild(sprite)
+        let map = this
+        if(!this.tileset.img.hasLoaded){
+            setTimeout(function() {
+              map.draw();
+            }, 1);
+            return false
+        }
+        // let x = window.game.viewport.x
+        // let y = window.game.viewport.y
+        // for(let i = -1; i < window.game.width / this.tilesize + 1 ; i++){
+        //     for(let j = -1; j < window.game.height / this.tilesize + 1; j++){
+        //         x = Math.trunc(window.game.viewport.x / this.tilesize + i)
+        //         y = Math.trunc(window.game.viewport.y / this.tilesize + j)
+        //         if(x >= 0 && x < this.matrix[0].length && y >= 0 && y < this.matrix.length){
+        //             let sprite = PIXI.Sprite.from(this.tileset.tile[this.matrix[y][x]])
+        //             sprite.scale.x = this.scale
+        //             sprite.scale.y = this.scale
+        //             sprite.x = i * this.tilesize
+        //             sprite.y = j * this.tilesize
+        //             this.container.addChild(sprite)
+        //         }
+        //     }
+        // }
+        //J'ai un viewport qui va de x a x + 1920 et de y a y + 1080
+        //Je dois toujours dessiner dessus avec une marge
+        //Je dois d'abord convertir mon viewport en valeur de grille
+        let viewx = Math.trunc(window.game.viewport.x / this.tilesize)
+        let viewy = Math.trunc(window.game.viewport.y / this.tilesize)
+        let x
+        let y
+        //Je démarre donc de x et y pour aller vers x + 1920/64...
+        // for(let i = viewy-1; i < window.game.height / this.tilesize + viewy + 1; i++){
+        //     for(let j = viewx-1; j < window.game.width / this.tilesize + viewx + 1 ; j++){
+        //
+        //     }
+        // }
+        console.log(viewx)
+        for(let i = viewx; i <= viewx + window.game.width / this.tilesize; i++){
+            for(let j = viewy; j < this.matrix.length ; j++){
+                x = Math.trunc(window.game.viewport.x / this.tilesize + i)
+                y = Math.trunc(window.game.viewport.y / this.tilesize + j)
+                if(x >= 0 && x < this.matrix[0].length && y >= 0 && y < this.matrix.length){
+                    let sprite = PIXI.Sprite.from(this.tileset.tile[this.matrix[y][x]])
+                    sprite.scale.x = this.scale
+                    sprite.scale.y = this.scale
+                    sprite.x = i * this.tilesize - window.game.viewport.x
+                    sprite.y = j * this.tilesize - window.game.viewport.y
+                    this.container.addChild(sprite)
+                }
             }
+        }
+    }
+    update(){
+        this.container.position.x = -(window.game.viewport.x);
+        this.container.position.y = -(window.game.viewport.y);
+        //Check if new things to draw
+    }
+    getMatrix(){
+        let map = this
+        let request = new XMLHttpRequest();
+        request.open("GET", "assets/maps/plain.map", true);
+        request.send(null);
+
+        request.onreadystatechange = function() {
+           if(request.readyState === 4) { // What does this even mean?
+               if(request.status === 200) {
+                   let res = request.responseText
+                   res = res.split("\n")
+                   for(let i = 0; i < res.length; i++){
+                       res[i] = res[i].split(" ")
+                   }
+                   console.log(res)
+                   map.matrix = res
+                   map.draw()
+               }
+           }
         }
     }
 }
@@ -250,6 +323,36 @@ if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}r.
 
 /***/ }),
 
+/***/ "./src/player.js":
+/*!***********************!*\
+  !*** ./src/player.js ***!
+  \***********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+class Player {
+    constructor(game){
+        window.addEventListener("keydown", event => {
+            console.log(event.keyCode)
+        });
+        this.sprite = PIXI.Sprite.from('assets/sprites/player.png');
+        this.sprite.scale.x = 0.1;
+        this.sprite.scale.y = 0.1;
+        game.app.stage.addChild(this.sprite)
+        this.x = 0
+        this.y = 0
+    }
+    update(){
+        this.sprite.position.x += 1
+    }
+}
+/* harmony default export */ __webpack_exports__["default"] = (Player);
+
+
+/***/ }),
+
 /***/ "./src/tileset.js":
 /*!************************!*\
   !*** ./src/tileset.js ***!
@@ -260,18 +363,50 @@ if(!(t instanceof e))throw new TypeError("Cannot call a class as a function")}r.
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 class Tileset {
-    constructor(url){
-        this.tile = []
+    constructor(url, size){
+        let tileset = this
         this.img = PIXI.BaseTexture.fromImage(url);
-        for(let i = 0; i < 5; i++){
-            this.tile.push(
-                new PIXI.Texture(this.img, new PIXI.Rectangle(0 + i * 16, 0, 16, 16))
-            )
-        }
-        console.log(this.tile)
+        this.tilesize = size
+        this.tile = []
+        this.img.on('loaded', function() {
+            tileset.width = this.width
+            tileset.height = this.height
+            for(let j = 0; j < Math.trunc(tileset.height / tileset.tilesize); j++){
+            for(let i = 0; i < Math.trunc(tileset.width / tileset.tilesize); i++){
+                tileset.tile.push(
+                    new PIXI.Texture(this, new PIXI.Rectangle(0 + i * tileset.tilesize, 0 + j * tileset.tilesize, tileset.tilesize, tileset.tilesize))
+                )
+            }
+            }
+            console.log(tileset.tile)
+        });
     }
 }
 /* harmony default export */ __webpack_exports__["default"] = (Tileset);
+
+
+/***/ }),
+
+/***/ "./src/viewport.js":
+/*!*************************!*\
+  !*** ./src/viewport.js ***!
+  \*************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+class Viewport {
+    constructor(){
+        this.x = 0
+        this.y = 0
+    }
+    update(){
+        this.x = window.game.player.x
+        this.y = window.game.player.y
+    }
+}
+/* harmony default export */ __webpack_exports__["default"] = (Viewport);
 
 
 /***/ }),
